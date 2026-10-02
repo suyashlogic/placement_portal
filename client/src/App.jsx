@@ -5,9 +5,14 @@ import LoadingSpinner from './components/LoadingSpinner';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardPlaceholder from './components/DashboardPlaceholder';
 import DashboardLayout from './layouts/DashboardLayout';
+import AuthShell from './layouts/AuthShell';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Unauthorized from './pages/Unauthorized';
+import StudentDashboard from './pages/student/StudentDashboard';
+import StudentProfile from './pages/student/StudentProfile';
+import StudentSkills from './pages/student/StudentSkills';
+import StudentDrives from './pages/student/StudentDrives';
 
 function HomeRedirect() {
   const { user, loading } = useAuth();
@@ -18,37 +23,37 @@ function HomeRedirect() {
 function App() {
   return (
     <Routes>
-      {/* Public */}
       <Route path="/" element={<HomeRedirect />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
 
-      {/* Student only */}
+      <Route element={<AuthShell />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
+
       <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/student" element={<DashboardPlaceholder title="Student Dashboard" />} />
+          <Route path="/student" element={<StudentDashboard />} />
+          <Route path="/student/profile" element={<StudentProfile />} />
+          <Route path="/student/skills" element={<StudentSkills />} />
+          <Route path="/student/drives" element={<StudentDrives />} />
         </Route>
       </Route>
 
-      {/* Officer (admins may also enter) */}
       <Route element={<ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'ADMIN']} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/officer" element={<DashboardPlaceholder title="Placement Officer Dashboard" />} />
         </Route>
       </Route>
 
-      {/* Admin only */}
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/admin" element={<DashboardPlaceholder title="Admin Dashboard" />} />
         </Route>
       </Route>
 
-      {/* Anything else */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
-
 export default App;

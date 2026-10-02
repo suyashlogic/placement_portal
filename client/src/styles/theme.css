@@ -1,0 +1,86 @@
+:root {
+  --bs-primary: #4f46e5;
+  --bs-primary-rgb: 79, 70, 229;
+  --bs-link-color: #4f46e5;
+  --bs-link-color-rgb: 79, 70, 229;
+  --bs-link-hover-color: #3730a3;
+  --bs-body-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --bs-body-color: #1f2937;
+  --sidebar-w: 250px;
+}
+body { background: #f4f6fb; }
+
+.btn-primary {
+  --bs-btn-bg: #4f46e5; --bs-btn-border-color: #4f46e5;
+  --bs-btn-hover-bg: #4338ca; --bs-btn-hover-border-color: #4338ca;
+  --bs-btn-active-bg: #3730a3; --bs-btn-active-border-color: #3730a3;
+  --bs-btn-disabled-bg: #4f46e5; --bs-btn-disabled-border-color: #4f46e5;
+}
+.btn-outline-primary {
+  --bs-btn-color: #4f46e5; --bs-btn-border-color: #4f46e5;
+  --bs-btn-hover-bg: #4f46e5; --bs-btn-hover-border-color: #4f46e5;
+  --bs-btn-active-bg: #4338ca; --bs-btn-active-border-color: #4338ca;
+}
+.btn { border-radius: 10px; font-weight: 500; }
+.form-control, .form-select { border-radius: 10px; padding: .55rem .8rem; }
+.form-control:focus, .form-select:focus {
+  border-color: #818cf8; box-shadow: 0 0 0 .2rem rgba(79, 70, 229, .15);
+}
+.card { border: 1px solid #e8ebf3; border-radius: 14px; box-shadow: 0 1px 3px rgba(16, 24, 40, .05); }
+
+/* ---- App shell ---- */
+.app-shell { display: flex; min-height: 100vh; }
+.sidebar {
+  width: var(--sidebar-w); background: #111936; color: #c7cbe0;
+  position: fixed; inset: 0 auto 0 0; display: flex; flex-direction: column;
+  padding: 1rem .75rem; z-index: 1040; transition: transform .2s ease;
+}
+.sidebar-brand {
+  display: flex; align-items: center; gap: .6rem; color: #fff;
+  font-weight: 700; font-size: 1.1rem; padding: .5rem .75rem 1.25rem;
+}
+.sidebar-brand i { color: #818cf8; font-size: 1.4rem; }
+.sidebar-nav { display: flex; flex-direction: column; gap: .25rem; flex: 1; }
+.sidebar-link {
+  display: flex; align-items: center; gap: .75rem; padding: .65rem .85rem;
+  border-radius: 10px; color: #c7cbe0; text-decoration: none; font-weight: 500;
+  font-size: .93rem; background: none; border: 0; width: 100%; text-align: left;
+}
+.sidebar-link:hover { background: rgba(255, 255, 255, .07); color: #fff; }
+.sidebar-link.active { background: #4f46e5; color: #fff; }
+.app-main { margin-left: var(--sidebar-w); flex: 1; min-width: 0; }
+.topbar {
+  position: sticky; top: 0; z-index: 1020; display: flex; align-items: center; gap: 1rem;
+  padding: .7rem 1.5rem; background: rgba(255, 255, 255, .88);
+  backdrop-filter: blur(8px); border-bottom: 1px solid #e8ebf3;
+}
+.page-content { padding: 1.75rem 1.5rem; max-width: 1200px; margin: 0 auto; }
+.avatar {
+  width: 38px; height: 38px; border-radius: 50%; background: #e0e7ff; color: #4338ca;
+  display: grid; place-items: center; font-weight: 700; font-size: .85rem;
+}
+.avatar-lg { width: 72px; height: 72px; font-size: 1.5rem; margin: 0 auto; }
+@media (max-width: 991.98px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: none; }
+  .app-main { margin-left: 0; }
+  .sidebar-backdrop { position: fixed; inset: 0; background: rgba(17, 25, 54, .5); z-index: 1030; }
+}
+
+/* ---- Components ---- */
+.page-title { font-weight: 700; margin: 0; }
+.stat-card .card-body { display: flex; align-items: center; gap: 1rem; }
+.stat-icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 1.35rem; }
+.tone-primary { background: #e0e7ff; color: #4338ca; }
+.tone-success { background: #dcfce7; color: #15803d; }
+.tone-warning { background: #fef3c7; color: #b45309; }
+.tone-info    { background: #cffafe; color: #0e7490; }
+.stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+.company-logo {
+  width: 42px; height: 42px; border-radius: 10px; background: #e0e7ff; color: #4338ca;
+  display: grid; place-items: center; font-weight: 700;
+}
+.drive-card { transition: box-shadow .15s, transform .15s; }
+.drive-card:hover { box-shadow: 0 8px 24px rgba(16, 24, 40, .09); transform: translateY(-2px); }
+.reason-box { background: #fef2f2; color: #b91c1c; border-radius: 10px; padding: .55rem .75rem; margin-top: auto; }
+.auth-shell { min-height: 100vh; background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 60%, #e0f2fe 100%); }

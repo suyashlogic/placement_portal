@@ -12,6 +12,10 @@ import authRoutes from './routes/authRoutes.js';
 import departmentRoutes from './routes/departmentRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
+import studentRoutes from './routes/studentRoutes.js';
+import skillRoutes from './routes/skillRoutes.js';
+import driveRoutes from './routes/driveRoutes.js';
+
 const app = express();
 const PgSession = connectPgSimple(session);
 
@@ -42,6 +46,10 @@ app.use(passport.session());
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/departments', departmentRoutes);
+
+app.use('/api/students', studentRoutes);
+app.use('/api/skills', skillRoutes);
+app.use('/api/drives', driveRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
