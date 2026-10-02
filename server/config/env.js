@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // .env lives in the project root, one level above /server
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 
-const required = ['PG_USER', 'PG_HOST', 'PG_DATABASE'];
+const required = ['PG_USER', 'PG_HOST', 'PG_DATABASE','SESSION_SECRET'];
 for (const key of required) {
   if (!process.env[key]) {
     console.error(`Missing required environment variable: ${key}`);

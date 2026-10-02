@@ -1,51 +1,53 @@
-import { useState, useEffect } from 'react';
-import api from './services/api';
-import StatusCard from './components/StatusCard';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
+import { homePathFor } from './utils/roleHome';
+import LoadingSpinner from './components/LoadingSpinner';
+import ProtectedRoute from './components/ProtectedRoute';
+import DashboardPlaceholder from './components/DashboardPlaceholder';
+import DashboardLayout from './layouts/DashboardLayout';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Unauthorized from './pages/Unauthorized';
+
+function HomeRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingSpinner />;
+  return <Navigate to={user ? homePathFor(user.role) : '/login'} replace />;
+}
 
 function App() {
-  const [health, setHealth] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const response = await api.get('/health');
-        setHealth(response.data.data);
-      } catch (err) {
-        setError(err.response?.data?.message || 'Cannot reach the API server');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkHealth();
-  }, []);
-
   return (
-    <div className="container py-5">
-      <h1 className="mb-1">
-        <i className="bi bi-mortarboard-fill text-primary me-2"></i>
-        Placement Cell Portal
-      </h1>
-      <p className="text-muted mb-4">Phase 1: connection check</p>
+    <Routes>
+      {/* Public */}
+      <Route path="/" element={<HomeRedirect />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
 
-      {loading && (
-        <div className="d-flex align-items-center">
-          <div className="spinner-border spinner-border-sm me-2" role="status"></div>
-          Checking connection...
-        </div>
-      )}
+      {/* Student only */}
+      <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/student" element={<DashboardPlaceholder title="Student Dashboard" />} />
+        </Route>
+      </Route>
 
-      {error && <div className="alert alert-danger">{error}</div>}
+      {/* Officer (admins may also enter) */}
+      <Route element={<ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'ADMIN']} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/officer" element={<DashboardPlaceholder title="Placement Officer Dashboard" />} />
+        </Route>
+      </Route>
 
-      {health && (
-        <div className="row g-3">
-          <StatusCard label="API" value={health.api} ok={health.api === 'running'} />
-          <StatusCard label="Database" value={health.database} ok={health.database === 'connected'} />
-        </div>
-      )}
-    </div>
+      {/* Admin only */}
+      <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/admin" element={<DashboardPlaceholder title="Admin Dashboard" />} />
+        </Route>
+      </Route>
+
+      {/* Anything else */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
