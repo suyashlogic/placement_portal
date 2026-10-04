@@ -10,11 +10,13 @@ import passport from './config/passport.js';
 import healthRoutes from './routes/healthRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import departmentRoutes from './routes/departmentRoutes.js';
-import { notFound, errorHandler } from './middleware/errorHandler.js';
-
 import studentRoutes from './routes/studentRoutes.js';
 import skillRoutes from './routes/skillRoutes.js';
 import driveRoutes from './routes/driveRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import companyRoutes from './routes/companyRoutes.js';
+import jobRoutes from './routes/jobRoutes.js';
+import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 const PgSession = connectPgSimple(session);
@@ -26,16 +28,16 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   session({
-    store: new PgSession({ pool, createTableIfMissing: true }), // sessions live in PostgreSQL
+    store: new PgSession({ pool, createTableIfMissing: true }),
     name: 'placement.sid',
     secret: env.sessionSecret,
-    resave: false,             // don't re-save unchanged sessions
-    saveUninitialized: false,  // don't create sessions for visitors who never log in
+    resave: false,
+    saveUninitialized: false,
     cookie: {
-      httpOnly: true,          // JavaScript cannot read the cookie (protects against XSS theft)
-      sameSite: 'lax',         // not sent on cross-site POSTs (basic CSRF protection)
-      secure: env.nodeEnv === 'production', // HTTPS only in production
-      maxAge: 1000 * 60 * 60 * 24 * 7,      // 7 days
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: env.nodeEnv === 'production',
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   })
 );
@@ -46,10 +48,12 @@ app.use(passport.session());
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/departments', departmentRoutes);
-
 app.use('/api/students', studentRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/drives', driveRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/companies', companyRoutes);
+app.use('/api/jobs', jobRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

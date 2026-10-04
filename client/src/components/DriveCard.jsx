@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { getDriveState } from '../utils/driveState';
 import { formatDate, formatPackage } from '../utils/format';
 
@@ -21,11 +22,18 @@ function DriveCard({ drive }) {
           <li className="mb-1"><i className="bi bi-geo-alt text-muted me-2"></i>{drive.location}</li>
           <li><i className="bi bi-calendar-event text-muted me-2"></i>Apply by {formatDate(drive.registrationDeadline)}</li>
         </ul>
-        {showReason && (
-          <div className="reason-box small">
-            <i className="bi bi-info-circle me-1"></i>{drive.eligibilityReason}
-          </div>
-        )}
+
+        {/* mt-auto pushes this block to the bottom so all cards line up */}
+        <div className="mt-auto pt-2">
+          {showReason && (
+            <div className="reason-box small mb-3">
+              <i className="bi bi-info-circle me-1"></i>{drive.eligibilityReason}
+            </div>
+          )}
+          <Link to={`/student/drives/${drive.driveId}`} className="btn btn-sm btn-outline-primary w-100">
+            View details
+          </Link>
+        </div>
       </div>
     </div>
   );

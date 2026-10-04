@@ -7,6 +7,7 @@ import FormInput from '../../components/FormInput';
 import PageHeader from '../../components/PageHeader';
 import ErrorMessage from '../../components/ErrorMessage';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import ResumeUpload from '../../components/ResumeUpload';
 
 function ProfileForm({ profile, departments }) {
   const [form, setForm] = useState({
@@ -106,6 +107,7 @@ function StudentProfile() {
               <div className="text-muted small mb-3">{p.email}</div>
               <span className="badge bg-primary-subtle text-primary-emphasis mb-2">{p.departmentName}</span>
               <div className="small text-muted">Roll number: <strong>{p.rollNumber}</strong></div>
+              <ResumeUpload resumePath={p.resumePath} onUploaded={profile.reload} />
             </div>
           </div>
         </div>

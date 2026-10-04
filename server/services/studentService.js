@@ -91,3 +91,10 @@ export const getDashboard = async (studentId) => {
     topDrives: eligible.slice(0, 3),
   };
 };
+
+// Returns the previous resume path so the caller can delete the old file
+export const saveResumePath = async (studentId, resumePath) => {
+  const old = await query('SELECT resume_path FROM students WHERE student_id = $1', [studentId]);
+  await query('UPDATE students SET resume_path = $1 WHERE student_id = $2', [resumePath, studentId]);
+  return old.rows[0]?.resume_path || null;
+};
