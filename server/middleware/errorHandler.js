@@ -28,6 +28,8 @@ const fromPostgresError = (err) => {
       return { status: 400, message: constraintMessages[err.constraint] || 'A value breaks a database rule' };
     case '23502': // not_null_violation
       return { status: 400, message: 'A required field is missing' };
+    case 'P0001': // RAISE EXCEPTION from our own triggers: the message is written for users
+      return { status: 409, message: err.message };
     default:
       return null;
   }

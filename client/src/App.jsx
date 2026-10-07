@@ -14,11 +14,15 @@ import StudentProfile from './pages/student/StudentProfile';
 import StudentSkills from './pages/student/StudentSkills';
 import StudentDrives from './pages/student/StudentDrives';
 import StudentDriveDetails from './pages/student/StudentDriveDetails';
+import StudentApplications from './pages/student/StudentApplications';
+import StudentApplicationDetails from './pages/student/StudentApplicationDetails';
 import Companies from './pages/officer/Companies';
 import Jobs from './pages/officer/Jobs';
 import Drives from './pages/officer/Drives';
 import DriveForm from './pages/officer/DriveForm';
 import DriveEligibleStudents from './pages/officer/DriveEligibleStudents';
+import Applications from './pages/officer/Applications';
+import ApplicationDetails from './pages/officer/ApplicationDetails';
 import Users from './pages/admin/Users';
 
 function HomeRedirect() {
@@ -46,6 +50,8 @@ function App() {
           <Route path="/student/skills" element={<StudentSkills />} />
           <Route path="/student/drives" element={<StudentDrives />} />
           <Route path="/student/drives/:id" element={<StudentDriveDetails />} />
+          <Route path="/student/applications" element={<StudentApplications />} />
+          <Route path="/student/applications/:id" element={<StudentApplicationDetails />} />
         </Route>
       </Route>
 
@@ -59,6 +65,8 @@ function App() {
           <Route path="/officer/drives/new" element={<DriveForm />} />
           <Route path="/officer/drives/:id/edit" element={<DriveForm />} />
           <Route path="/officer/drives/:id/students" element={<DriveEligibleStudents />} />
+          <Route path="/officer/applications" element={<Applications />} />
+          <Route path="/officer/applications/:id" element={<ApplicationDetails />} />
         </Route>
       </Route>
 

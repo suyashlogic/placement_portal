@@ -55,7 +55,10 @@ function StudentDashboard() {
             <div className="card-body">
               <h6>Applications</h6>
               <div className="stat-value">{applicationCount}</div>
-              <div className="small text-muted">Applying opens in the next phase.</div>
+              <div className="small text-muted mb-2">
+                {applicationCount === 0 ? 'You have not applied to any drive yet.' : 'Drives you have applied to.'}
+              </div>
+              <Link to="/student/applications" className="small">Track my applications</Link>
             </div>
           </div>
         </div>

@@ -108,7 +108,11 @@ function Drives() {
                     <td><StatusBadge status={d.status} /></td>
                     <td className="small">{formatDate(d.registrationOpenDate)} to {formatDate(d.registrationDeadline)}</td>
                     <td className="small">{formatDate(d.driveDate)}</td>
-                    <td className="text-center">{d.applicationCount}</td>
+                    <td className="text-center">
+                      {d.applicationCount > 0
+                        ? <Link to={`/officer/applications?driveId=${d.driveId}`}>{d.applicationCount}</Link>
+                        : 0}
+                    </td>
                     <td>
                       <div className="d-flex flex-wrap gap-1">
                         <Link to={`/officer/drives/${d.driveId}/students`} className="btn btn-sm btn-outline-primary">

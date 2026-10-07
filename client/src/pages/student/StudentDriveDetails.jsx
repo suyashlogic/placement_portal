@@ -1,8 +1,10 @@
-import { useCallback } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useCallback, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useFetch } from '../../hooks/useFetch';
 import { getDriveDetails } from '../../services/driveService';
+import { applyToDrive } from '../../services/applicationService';
 import { getDriveState } from '../../utils/driveState';
+import { getErrorMessage } from '../../utils/getErrorMessage';
 import { formatDateTime, formatPackage } from '../../utils/format';
 import ErrorMessage from '../../components/ErrorMessage';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -24,8 +26,13 @@ function RequirementRow({ met, title, detail }) {
 
 function StudentDriveDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const fetchDrive = useCallback(() => getDriveDetails(id), [id]);
   const { data: drive, loading, error, reload } = useFetch(fetchDrive);
+
+  // Apply button state (hooks must stay above the early returns below)
+  const [applying, setApplying] = useState(false);
+  const [applyError, setApplyError] = useState('');
 
   const backLink = (
     <Link to="/student/drives" className="small text-decoration-none">
@@ -46,6 +53,23 @@ function StudentDriveDetails() {
   const r = drive.requirements;
   const state = getDriveState(drive);
 
+  // React only SENDS the drive id. The server takes the student from the session
+  // and the database re-checks eligibility, deadline and duplicates.
+  const handleApply = async () => {
+    setApplying(true);
+    setApplyError('');
+    try {
+      const application = await applyToDrive(drive.driveId);
+      navigate(`/student/applications/${application.applicationId}`, {
+        state: { notice: 'Application submitted successfully' },
+      });
+    } catch (err) {
+      setApplyError(getErrorMessage(err));
+      setApplying(false);
+      reload();   // the drive may have closed or your profile changed, so show the latest state
+    }
+  };
+
   return (
     <>
       {backLink}
@@ -65,7 +89,6 @@ function StudentDriveDetails() {
 
       <div className="row g-3">
         <div className="col-lg-8">
-          {/* Verdict from the database function */}
           <div className={`alert ${drive.isEligible ? 'alert-success' : 'alert-warning'} d-flex gap-2`}>
             <i className={`bi ${drive.isEligible ? 'bi-patch-check' : 'bi-info-circle'}`}></i>
             <div><strong>{drive.isEligible ? 'You are eligible.' : 'You are not eligible yet.'}</strong>{' '}
@@ -140,14 +163,20 @@ function StudentDriveDetails() {
           <div className="card">
             <div className="card-body">
               <h6>Apply</h6>
+              {applyError && <div className="alert alert-danger py-2 small">{applyError}</div>}
               {drive.hasApplied ? (
-                <div className="alert alert-primary mb-0">You have already applied to this drive.</div>
+                <>
+                  <div className="alert alert-primary">You have already applied to this drive.</div>
+                  <Link to="/student/applications" className="btn btn-outline-primary w-100">View my applications</Link>
+                </>
               ) : drive.registrationClosed ? (
                 <div className="alert alert-secondary mb-0">Registration is closed for this drive.</div>
               ) : drive.isEligible ? (
                 <>
-                  <button className="btn btn-primary w-100" disabled>Apply now</button>
-                  <div className="small text-muted mt-2">Applying is switched on in Phase 6.</div>
+                  <button className="btn btn-primary w-100" onClick={handleApply} disabled={applying}>
+                    {applying ? 'Submitting...' : 'Apply now'}
+                  </button>
+                  <div className="small text-muted mt-2">Your eligibility is checked again by the database when you apply.</div>
                 </>
               ) : (
                 <>
