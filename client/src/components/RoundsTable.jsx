@@ -2,9 +2,9 @@ import StatusBadge from './StatusBadge';
 import { formatDateTime } from '../utils/format';
 
 // Read-only list of interview / test rounds. Officers will create them in the next phase.
-function RoundsTable({ rounds }) {
+function RoundsTable({ rounds, emptyText = 'No rounds scheduled yet. You will be notified when there are.' }) {
   if (rounds.length === 0) {
-    return <div className="small text-muted">No rounds scheduled yet. You will be notified when there are.</div>;
+    return <div className="small text-muted">{emptyText}</div>;
   }
   return (
     <div className="table-responsive">

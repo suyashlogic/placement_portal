@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useFetch } from '../../hooks/useFetch';
 import { getDashboard } from '../../services/studentService';
 import PageHeader from '../../components/PageHeader';
+import PlacementBanner from '../../components/PlacementBanner';
 import StatCard from '../../components/StatCard';
 import DriveCard from '../../components/DriveCard';
 import EmptyState from '../../components/EmptyState';
@@ -25,6 +26,8 @@ function StudentDashboard() {
         title={`Welcome back, ${user.fullName.split(' ')[0]}`}
         subtitle={`${profile.departmentName} · Class of ${profile.graduationYear}`}
       />
+
+      <PlacementBanner />
 
       <div className="row g-3 mb-4">
         <div className="col-6 col-xl-3"><StatCard icon="bi-mortarboard" label="CGPA" value={Number(profile.cgpa).toFixed(2)} tone="primary" /></div>

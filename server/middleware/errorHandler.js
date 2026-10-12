@@ -16,6 +16,8 @@ const constraintMessages = {
   companies_company_name_key: 'A company with this name already exists',
   chk_drive_dates: 'Registration must open, then close, then the drive takes place',
   chk_job_package_range: 'Maximum package must be at least the minimum',
+  offers_application_id_key: 'An offer already exists for this application',
+  placements_offer_id_key: 'A placement has already been recorded for this offer',
 };
 
 const fromPostgresError = (err) => {

@@ -2,18 +2,23 @@ import { useCallback, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useFetch } from '../../hooks/useFetch';
 import { getApplicationsForStaff } from '../../services/applicationService';
+import { shortlistApplications } from '../../services/selectionService';
 import { getManagedDrives } from '../../services/driveService';
 import { ALL_STATUSES, label } from '../../utils/applicationStatus';
+import { getErrorMessage } from '../../utils/getErrorMessage';
 import { formatDate } from '../../utils/format';
 import PageHeader from '../../components/PageHeader';
 import StatusBadge from '../../components/StatusBadge';
 import Pagination from '../../components/Pagination';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import EmptyState from '../../components/EmptyState';
 import ErrorMessage from '../../components/ErrorMessage';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
-// Teaches: the URL as state. Filters live in the query string (?driveId=2&status=APPLIED&page=2),
-// so a filtered list can be refreshed, bookmarked, or linked from another page.
+// Only these can still be shortlisted
+const SHORTLISTABLE = ['APPLIED', 'UNDER_REVIEW'];
+
+// Teaches: the URL as state (filters), plus a selection kept in component state (checked rows)
 function Applications() {
   const [params, setParams] = useSearchParams();
   const driveId = params.get('driveId') || '';
@@ -22,6 +27,11 @@ function Applications() {
   const page = Number(params.get('page')) || 1;
 
   const [searchInput, setSearchInput] = useState(q);
+  const [selected, setSelected] = useState([]);          // application ids ticked by the officer
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [actionError, setActionError] = useState('');
   const drives = useFetch(getManagedDrives);
 
   const fetchApplications = useCallback(
@@ -30,25 +40,62 @@ function Applications() {
   );
   const { data, loading, error, reload } = useFetch(fetchApplications);
 
-  // Change one filter, keep the others, go back to page 1
   const setFilter = (key, value) => {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value); else next.delete(key);
     next.delete('page');
     setParams(next);
+    setSelected([]);
   };
   const setPage = (p) => {
     const next = new URLSearchParams(params);
     next.set('page', String(p));
     setParams(next);
+    setSelected([]);
   };
 
   if (loading && !data) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} onRetry={reload} />;
 
+  const selectable = data.applications.filter((a) => SHORTLISTABLE.includes(a.status));
+  const allTicked = selectable.length > 0 && selectable.every((a) => selected.includes(a.applicationId));
+
+  const toggleOne = (id) =>
+    setSelected(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+  const toggleAll = () =>
+    setSelected(allTicked ? [] : selectable.map((a) => a.applicationId));
+
+  const handleShortlist = async () => {
+    setBusy(true);
+    setActionError('');
+    try {
+      const result = await shortlistApplications(selected);
+      setNotice(`${result.shortlisted} shortlisted${result.skipped.length ? `, ${result.skipped.length} skipped` : ''}. Students have been notified.`);
+      setSelected([]);
+      setConfirming(false);
+      await reload();
+    } catch (err) {
+      setConfirming(false);
+      setActionError(getErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <>
-      <PageHeader title="Applications" subtitle="Monitor and review student applications" />
+      <PageHeader title="Applications" subtitle="Monitor, review and shortlist student applications">
+        {selected.length > 0 && (
+          <button className="btn btn-success" onClick={() => setConfirming(true)}>
+            <i className="bi bi-check2-all me-1"></i>Shortlist selected ({selected.length})
+          </button>
+        )}
+      </PageHeader>
+
+      {notice && <div className="alert alert-success alert-dismissible">
+        {notice}<button type="button" className="btn-close" onClick={() => setNotice('')}></button>
+      </div>}
+      {actionError && <div className="alert alert-danger">{actionError}</div>}
 
       <div className="card">
         <div className="card-body border-bottom">
@@ -81,11 +128,25 @@ function Applications() {
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
-                <tr><th>Student</th><th>Drive</th><th>CGPA</th><th>Applied</th><th>Status</th><th></th></tr>
+                <tr>
+                  <th style={{ width: 40 }}>
+                    <input type="checkbox" className="form-check-input" checked={allTicked}
+                      disabled={selectable.length === 0} onChange={toggleAll} aria-label="Select all" />
+                  </th>
+                  <th>Student</th><th>Drive</th><th>CGPA</th><th>Applied</th><th>Status</th><th></th>
+                </tr>
               </thead>
               <tbody>
                 {data.applications.map((a) => (
                   <tr key={a.applicationId}>
+                    <td>
+                      {SHORTLISTABLE.includes(a.status) && (
+                        <input type="checkbox" className="form-check-input"
+                          checked={selected.includes(a.applicationId)}
+                          onChange={() => toggleOne(a.applicationId)}
+                          aria-label={`Select ${a.studentName}`} />
+                      )}
+                    </td>
                     <td>
                       <div className="fw-semibold">{a.studentName}</div>
                       <div className="small text-muted">{a.rollNumber} · {a.departmentCode}</div>
@@ -108,6 +169,13 @@ function Applications() {
         )}
         <Pagination page={data.page} pageSize={data.pageSize} total={data.total} onChange={setPage} />
       </div>
+
+      {confirming && (
+        <ConfirmDialog title="Shortlist selected students?"
+          message={`${selected.length} application(s) will be moved to Shortlisted and each student will be notified.`}
+          confirmLabel="Shortlist" variant="success" busy={busy}
+          onConfirm={handleShortlist} onCancel={() => setConfirming(false)} />
+      )}
     </>
   );
 }

@@ -4,6 +4,7 @@ const tones = {
   SELECTED: 'success', OFFERED: 'success', PLACED: 'success', REJECTED: 'danger', WITHDRAWN: 'secondary',
   PENDING: 'warning', PASSED: 'success', FAILED: 'danger', ABSENT: 'secondary',
   ACCEPTED: 'success', EXPIRED: 'secondary', ACTIVE: 'success', INACTIVE: 'secondary',
+  CONFIRMED: 'success', JOINED: 'primary',
 };
 
 function StatusBadge({ status }) {

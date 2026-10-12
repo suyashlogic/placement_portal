@@ -29,7 +29,7 @@ export const addDrive = async (req, res) => {
 };
 
 export const editDrive = async (req, res) => {
-  const updated = await management.updateDrive(req.idParam, req.body);
+  const updated = await management.updateDrive(req.idParam, req.body, req.user.user_id);
   if (!updated) return notFound(res);
   await logAudit({ userId: req.user.user_id, action: 'DRIVE_UPDATE', entityType: 'drive', entityId: req.idParam });
   const drive = await management.getDriveForOfficer(req.idParam);
@@ -37,7 +37,7 @@ export const editDrive = async (req, res) => {
 };
 
 export const setDriveStatus = async (req, res) => {
-  const result = await management.changeDriveStatus(req.idParam, req.body.status);
+  const result = await management.changeDriveStatus(req.idParam, req.body.status, req.user.user_id);
   if (!result) return notFound(res);
   await logAudit({
     userId: req.user.user_id, action: 'DRIVE_STATUS', entityType: 'drive',

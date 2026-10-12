@@ -97,7 +97,7 @@ function ApplicationDetails() {
           )}
           <div className="card mb-3">
             <div className="card-header bg-white fw-semibold">Selection rounds</div>
-            <div className="card-body"><RoundsTable rounds={rounds} /></div>
+            <div className="card-body"><RoundsTable rounds={rounds} emptyText="No rounds have been created for this application yet." /></div>
           </div>
           <div className="card">
             <div className="card-header bg-white fw-semibold">Status history</div>
@@ -116,6 +116,9 @@ function ApplicationDetails() {
                 <li className="mb-2"><i className="bi bi-envelope text-muted me-2"></i>{app.studentEmail}</li>
                 <li><i className="bi bi-send text-muted me-2"></i>Applied {formatDateTime(app.applicationDate)}</li>
               </ul>
+              <Link to={`/officer/selection?driveId=${app.driveId}`} className="btn btn-sm btn-outline-primary w-100 mt-3">
+                <i className="bi bi-diagram-3 me-1"></i>Manage rounds for this drive
+              </Link>
             </div>
           </div>
           <div className="card">

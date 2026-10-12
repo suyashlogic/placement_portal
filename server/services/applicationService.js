@@ -1,6 +1,7 @@
 import { query } from '../config/db.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { httpError } from '../utils/httpError.js';
+import { setActor, writeAudit, notify, emailAfterCommit } from '../utils/txHelpers.js';
 
 const PAGE_SIZE = 15;
 const WITHDRAWABLE = ['APPLIED', 'UNDER_REVIEW', 'SHORTLISTED'];
@@ -12,21 +13,6 @@ const APP_COLS = `application_id AS "applicationId", student_id AS "studentId", 
   min_package_lpa AS "minPackageLpa", max_package_lpa AS "maxPackageLpa",
   student_name AS "studentName", student_email AS "studentEmail", roll_number AS "rollNumber",
   cgpa, department_code AS "departmentCode"`;
-
-// Tells the history trigger who made the change. "true" = lasts only until COMMIT/ROLLBACK.
-const setActor = (client, userId, remarks = '') =>
-  client.query(`SELECT set_config('app.user_id', $1, true), set_config('app.remarks', $2, true)`,
-    [String(userId), remarks]);
-
-const writeAudit = (client, userId, action, applicationId, metadata = null) =>
-  client.query(
-    `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, metadata)
-     VALUES ($1, $2, 'application', $3, $4)`,
-    [userId, action, applicationId, metadata ? JSON.stringify(metadata) : null]
-  );
-
-const notify = (client, userId, title, message) =>
-  client.query('INSERT INTO notifications (user_id, title, message) VALUES ($1, $2, $3)', [userId, title, message]);
 
 // ---------------------------------------------------------------------------
 // APPLY: the transaction that matters most in this project.
@@ -81,8 +67,9 @@ export const applyToDrive = (studentId, userId, driveId) =>
     const applicationId = inserted.rows[0].application_id;
 
     // 7. Audit + in-app notification, inside the SAME transaction.
-    await writeAudit(client, userId, 'APPLICATION_SUBMIT', applicationId, { driveId });
+    await writeAudit(client, userId, 'APPLICATION_SUBMIT', 'application', applicationId, { driveId });
     await notify(client, userId, 'Application submitted', `You applied to ${drive.drive_title}.`);
+    emailAfterCommit(client, 'applicationSubmitted', userId, { driveTitle: drive.drive_title, applicationId });
 
     return { applicationId, status: 'APPLIED' };
   });
@@ -102,7 +89,7 @@ export const withdrawApplication = (studentId, userId, applicationId) =>
       throw httpError(409, 'You can only withdraw while your application is applied, under review or shortlisted');
     }
     await client.query("UPDATE applications SET application_status = 'WITHDRAWN' WHERE application_id = $1", [applicationId]);
-    await writeAudit(client, userId, 'APPLICATION_WITHDRAW', applicationId);
+    await writeAudit(client, userId, 'APPLICATION_WITHDRAW', 'application', applicationId);
     return { applicationId, status: 'WITHDRAWN' };
   });
 
@@ -116,6 +103,8 @@ const STATUS_MESSAGES = {
   SELECTED: (d) => ['You have been selected', `You were selected for ${d}.`],
   REJECTED: (d) => ['Application update', `Your application for ${d} was not successful.`],
 };
+
+const EMAIL_FOR_STATUS = { SHORTLISTED: 'shortlisted', SELECTED: 'selected', REJECTED: 'applicationClosed' };
 
 export const changeApplicationStatus = (applicationId, status, remarks, userId) =>
   withTransaction(async (client) => {
@@ -136,7 +125,13 @@ export const changeApplicationStatus = (applicationId, status, remarks, userId) 
     );
     const [title, message] = STATUS_MESSAGES[status](info.rows[0].drive_title);
     await notify(client, info.rows[0].user_id, title, message);
-    await writeAudit(client, userId, 'APPLICATION_STATUS', applicationId, { status });
+    // Only the milestones that matter get an email. UNDER_REVIEW and INTERVIEW stay in-app only.
+    const template = EMAIL_FOR_STATUS[status];
+    if (template) {
+      emailAfterCommit(client, template, info.rows[0].user_id,
+        { driveTitle: info.rows[0].drive_title, applicationId });
+    }
+    await writeAudit(client, userId, 'APPLICATION_STATUS', 'application', applicationId, { status });
     return { applicationId, status };
   });
 

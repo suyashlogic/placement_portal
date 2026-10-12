@@ -67,6 +67,17 @@ function StudentApplicationDetails() {
         {notice}<button type="button" className="btn-close" onClick={() => setNotice('')}></button>
       </div>}
       {actionError && <div className="alert alert-danger">{actionError}</div>}
+      {app.status === 'OFFERED' && (
+        <div className="alert alert-success d-flex justify-content-between align-items-center">
+          <span><i className="bi bi-envelope-paper me-2"></i>You have an offer for this drive.</span>
+          <Link to="/student/offers" className="btn btn-sm btn-success">View offer</Link>
+        </div>
+      )}
+      {app.status === 'PLACED' && (
+        <div className="alert alert-success">
+          <i className="bi bi-trophy me-2"></i>Congratulations, you are placed! <Link to="/student/placement">See your placement</Link>
+        </div>
+      )}
       {app.status === 'REJECTED' && <div className="alert alert-danger">This application was not successful. Keep applying to other drives.</div>}
       {app.status === 'WITHDRAWN' && <div className="alert alert-secondary">You withdrew this application. You cannot apply to this drive again.</div>}
 

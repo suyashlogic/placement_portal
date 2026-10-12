@@ -16,6 +16,8 @@ import StudentDrives from './pages/student/StudentDrives';
 import StudentDriveDetails from './pages/student/StudentDriveDetails';
 import StudentApplications from './pages/student/StudentApplications';
 import StudentApplicationDetails from './pages/student/StudentApplicationDetails';
+import StudentOffers from './pages/student/StudentOffers';
+import StudentPlacement from './pages/student/StudentPlacement';
 import Companies from './pages/officer/Companies';
 import Jobs from './pages/officer/Jobs';
 import Drives from './pages/officer/Drives';
@@ -23,7 +25,13 @@ import DriveForm from './pages/officer/DriveForm';
 import DriveEligibleStudents from './pages/officer/DriveEligibleStudents';
 import Applications from './pages/officer/Applications';
 import ApplicationDetails from './pages/officer/ApplicationDetails';
+import Selection from './pages/officer/Selection';
+import Offers from './pages/officer/Offers';
+import Placements from './pages/officer/Placements';
 import Users from './pages/admin/Users';
+import EmailSettings from './pages/admin/EmailSettings';
+import AuditLogs from './pages/admin/AuditLogs';
+import Notifications from './pages/Notifications';
 
 function HomeRedirect() {
   const { user, loading } = useAuth();
@@ -52,6 +60,8 @@ function App() {
           <Route path="/student/drives/:id" element={<StudentDriveDetails />} />
           <Route path="/student/applications" element={<StudentApplications />} />
           <Route path="/student/applications/:id" element={<StudentApplicationDetails />} />
+          <Route path="/student/offers" element={<StudentOffers />} />
+          <Route path="/student/placement" element={<StudentPlacement />} />
         </Route>
       </Route>
 
@@ -67,6 +77,9 @@ function App() {
           <Route path="/officer/drives/:id/students" element={<DriveEligibleStudents />} />
           <Route path="/officer/applications" element={<Applications />} />
           <Route path="/officer/applications/:id" element={<ApplicationDetails />} />
+          <Route path="/officer/selection" element={<Selection />} />
+          <Route path="/officer/offers" element={<Offers />} />
+          <Route path="/officer/placements" element={<Placements />} />
         </Route>
       </Route>
 
@@ -75,6 +88,15 @@ function App() {
         <Route element={<DashboardLayout />}>
           <Route path="/admin" element={<DashboardPlaceholder title="Admin Dashboard" />} />
           <Route path="/admin/users" element={<Users />} />
+          <Route path="/admin/email" element={<EmailSettings />} />
+          <Route path="/admin/audit" element={<AuditLogs />} />
+        </Route>
+      </Route>
+
+      {/* Notifications: every signed-in role, each sees only their own */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/notifications" element={<Notifications />} />
         </Route>
       </Route>
 

@@ -1,6 +1,8 @@
 import { query } from '../config/db.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { httpError } from '../utils/httpError.js';
+import { emailManyAfterCommit, setActor } from '../utils/txHelpers.js';
+import { formatWhen, formatPackageRange } from '../utils/formatters.js';
 
 // The drive status lifecycle. Anything not listed here is rejected.
 const NEXT_STATUSES = {
@@ -68,6 +70,7 @@ const saveEligibility = async (client, driveId, d) => {
 // Drive + eligibility rule + departments: all or nothing.
 export const createDrive = (d, userId) =>
   withTransaction(async (client) => {
+    await setActor(client, userId);   // the audit trigger records who created the drive
     const job = await client.query('SELECT job_status FROM jobs WHERE job_id = $1', [d.jobId]);
     if (!job.rows[0]) throw httpError(400, 'Selected job does not exist');
     if (job.rows[0].job_status !== 'OPEN') throw httpError(409, 'This job is closed. Choose an open job.');
@@ -85,8 +88,9 @@ export const createDrive = (d, userId) =>
     return driveId;
   });
 
-export const updateDrive = (driveId, d) =>
+export const updateDrive = (driveId, d, userId) =>
   withTransaction(async (client) => {
+    await setActor(client, userId);
     // FOR UPDATE locks this row until COMMIT, so two officers cannot edit it at the same moment.
     const current = await client.query(
       'SELECT status, job_id FROM placement_drives WHERE drive_id = $1 FOR UPDATE',
@@ -114,8 +118,40 @@ export const updateDrive = (driveId, d) =>
     return true;
   });
 
-export const changeDriveStatus = (driveId, newStatus) =>
+// Publishing a drive tells every ELIGIBLE student: an in-app notification (inside the transaction)
+// and an email (after COMMIT). The eligibility decision is the same SQL function used everywhere.
+const announceDrive = async (client, driveId) => {
+  const info = await client.query(
+    `SELECT p.drive_title AS "driveTitle", p.registration_deadline AS deadline,
+            c.company_name AS "companyName", j.job_title AS "jobTitle",
+            j.min_package_lpa AS min, j.max_package_lpa AS max
+       FROM placement_drives p JOIN jobs j ON j.job_id = p.job_id JOIN companies c ON c.company_id = j.company_id
+      WHERE p.drive_id = $1`,
+    [driveId]
+  );
+  const d = info.rows[0];
+
+  const recipients = await client.query(
+    `INSERT INTO notifications (user_id, title, message)
+     SELECT u.user_id, 'New placement drive', $2
+       FROM students s
+       JOIN users u ON u.user_id = s.user_id
+       CROSS JOIN LATERAL check_student_eligibility(s.student_id, $1::int) AS e
+      WHERE e.is_eligible AND u.is_active
+     RETURNING user_id`,
+    [driveId, `${d.companyName} opened a drive you are eligible for: ${d.driveTitle}.`]
+  );
+
+  const data = {
+    driveId, driveTitle: d.driveTitle, companyName: d.companyName, jobTitle: d.jobTitle,
+    deadline: formatWhen(d.deadline), packageRange: formatPackageRange(d.min, d.max),
+  };
+  emailManyAfterCommit(client, 'newDrive', recipients.rows.map((r) => ({ userId: r.user_id, data })));
+};
+
+export const changeDriveStatus = (driveId, newStatus, userId) =>
   withTransaction(async (client) => {
+    await setActor(client, userId);
     const current = await client.query(
       'SELECT status, registration_deadline FROM placement_drives WHERE drive_id = $1 FOR UPDATE',
       [driveId]
@@ -131,6 +167,10 @@ export const changeDriveStatus = (driveId, newStatus) =>
     }
 
     await client.query('UPDATE placement_drives SET status = $1 WHERE drive_id = $2', [newStatus, driveId]);
+
+    // Only the first publication announces the drive. Reopening a closed drive stays quiet.
+    if (drive.status === 'DRAFT' && newStatus === 'OPEN') await announceDrive(client, driveId);
+
     return { driveId, status: newStatus };
   });
 
