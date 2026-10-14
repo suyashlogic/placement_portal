@@ -27,3 +27,9 @@ export const formatDay = (value) => {
   const [y, m, d] = value.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 };
+
+// "2026-10" -> "Oct 26" (short label for chart axes)
+export const formatMonth = (value) => {
+  const [y, m] = String(value).split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+};

@@ -4,6 +4,7 @@ import { useFetch } from '../../hooks/useFetch';
 import { getDashboard } from '../../services/studentService';
 import PageHeader from '../../components/PageHeader';
 import PlacementBanner from '../../components/PlacementBanner';
+import StudentInsights from '../../components/analytics/StudentInsights';
 import StatCard from '../../components/StatCard';
 import DriveCard from '../../components/DriveCard';
 import EmptyState from '../../components/EmptyState';
@@ -83,6 +84,8 @@ function StudentDashboard() {
           )}
         </div>
       </div>
+
+      <div className="mt-4"><StudentInsights /></div>
     </>
   );
 }

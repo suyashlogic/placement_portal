@@ -145,6 +145,9 @@ PostgreSQL indexes every `PRIMARY KEY` and `UNIQUE` automatically, but **not for
 | `get_company_hiring_statistics(company?)` | SQL, `RETURNS SETOF` a view | Hiring pipeline per company |
 | `get_package_statistics()` | SQL | Average, median (`percentile_cont`), highest, lowest package |
 | `get_placement_trends(months)` | SQL | Monthly placements with a running total (window function); `generate_series` keeps empty months |
+| `get_application_funnel(drive?)` | SQL | How many applications ever reached each stage (applied to placed), from the history table; whole portal or one drive |
+| `get_package_distribution(bucket)` | SQL | Histogram of final packages. `generate_series` keeps empty buckets; the bucket width is clamped to at least 1 |
+| `get_application_status_breakdown(student?)` | SQL | Applications per status in lifecycle order, zeros included (`unnest ... WITH ORDINALITY` fixes the order) |
 | `close_expired_drives()` | **Procedure** | Closes OPEN drives past their deadline |
 | `expire_stale_offers(days)` | **Procedure** | Expires old pending offers. Uses `COMMIT` inside the loop (one offer per transaction) |
 | `set_updated_at()` | Trigger function | Timestamps |
@@ -288,6 +291,21 @@ Design points: only meaningful changes are logged (a phone-only edit or an ident
 | 6 | Student application statistics | `get_student_application_statistics()` |
 | 7 | Placement trends | `get_placement_trends()` |
 
+**API and dashboards (Phase 11).** The functions above are exposed unchanged by `/api/analytics/*` (staff only; students get only `/api/analytics/me`, which uses the student id from the session). The API layer only renames columns and converts `NUMERIC`/`BIGINT` values (returned by node-postgres as strings) to numbers. No statistic is calculated in Express or React. A missing rate (zero students) is returned as 0, never as NULL.
+
+| Endpoint | Database object |
+|---|---|
+| `GET /api/analytics/overview` | `get_overview_statistics()` |
+| `GET /api/analytics/department-placement?year=` | `calculate_department_placement_rate(year)` |
+| `GET /api/analytics/company-hiring?limit=` | `get_company_hiring_statistics()` |
+| `GET /api/analytics/package-statistics?bucket=` | `get_package_statistics()` + `get_package_distribution()` |
+| `GET /api/analytics/drive-selection?driveId=` | `calculate_drive_selection_ratio(drive)` |
+| `GET /api/analytics/funnel?driveId=` | `get_application_funnel(drive)` |
+| `GET /api/analytics/placement-trends?months=` | `get_placement_trends(months)` |
+| `GET /api/analytics/status-breakdown` | `get_application_status_breakdown()` |
+| `GET /api/analytics/me` (student) | `get_student_application_statistics()` + `get_application_status_breakdown(student)` |
+| `GET /api/analytics/dashboard/officer`, `/admin` | Overview function plus small count and list queries over the views |
+
 "Placed" always means a placement whose status is not `CANCELLED`; the one-placement-per-student trigger guarantees at most one row per student, so nothing is double-counted.
 
 `database/queries.sql` is the query catalogue: 12 queries answering the specification plus 12 advanced ones (correlated subquery, `NOT EXISTS`, `RANK`, `ROW_NUMBER`, CTE, `ROLLUP`, `EXCEPT`, `LEAD`, `HAVING`, JSONB operators, lock inspection, trigger catalogue).
@@ -302,6 +320,7 @@ Tested on PostgreSQL 16 with 2,000 students, 8,000 applications, 22,927 history 
 - The audit triggers were exercised for every rule above, including tamper attempts
 - The procedures were run, including the failure case of calling one inside a transaction block
 - Races were reproduced and shown to be prevented: simultaneous apply (1 of 8 succeeds), simultaneous offers for one student (1 of 2), simultaneous reminders (0 duplicates)
+- The dashboards were rendered in a simulated browser (jsdom) fed by the real Express routes and database; the numbers on screen were compared with the API numbers (for example 8000 > 3627 > 1996 > 1139 > 584 > 312 in the funnel), filters were shown to re-fetch, and an empty database was shown to produce zeros and empty states instead of errors
 - All SQL files were loaded into an empty database in the documented order, then run a second time (all are re-runnable), and the analytics return zeros rather than errors on an empty database
 
 ---
@@ -320,11 +339,12 @@ Tested on PostgreSQL 16 with 2,000 students, 8,000 applications, 22,927 history 
 | 8 | `triggers_offers.sql` | Offer and placement triggers |
 | 9 | `views_offers.sql` | Offer and placement views |
 | 10 | `analytics.sql` | Report views and functions |
-| 11 | `audit_triggers.sql` | Audit triggers |
-| 12 | `procedures.sql` | Maintenance procedures |
+| 11 | `analytics_dashboard.sql` | Funnel, package distribution and status breakdown functions |
+| 12 | `audit_triggers.sql` | Audit triggers |
+| 13 | `procedures.sql` | Maintenance procedures |
 | any | `queries.sql`, `explain_demo.sql` | Read-only catalogue; throw-away performance demo |
 
-Re-running `schema.sql` drops the tables and therefore their triggers: run files 5 to 12 again afterwards.
+Re-running `schema.sql` drops the tables and therefore their triggers: run files 5 to 13 again afterwards.
 
 ---
 

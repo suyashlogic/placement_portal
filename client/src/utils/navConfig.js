@@ -6,6 +6,7 @@ const staffItems = [
   { to: '/officer/selection', label: 'Selection', icon: 'bi-diagram-3' },
   { to: '/officer/offers', label: 'Offers', icon: 'bi-envelope-paper' },
   { to: '/officer/placements', label: 'Placements', icon: 'bi-trophy' },
+  { to: '/officer/analytics', label: 'Analytics', icon: 'bi-bar-chart-line' },
 ];
 
 export const navItems = {

@@ -3,7 +3,6 @@ import { useAuth } from './hooks/useAuth';
 import { homePathFor } from './utils/roleHome';
 import LoadingSpinner from './components/LoadingSpinner';
 import ProtectedRoute from './components/ProtectedRoute';
-import DashboardPlaceholder from './components/DashboardPlaceholder';
 import DashboardLayout from './layouts/DashboardLayout';
 import AuthShell from './layouts/AuthShell';
 import Login from './pages/Login';
@@ -29,6 +28,9 @@ import Selection from './pages/officer/Selection';
 import Offers from './pages/officer/Offers';
 import Placements from './pages/officer/Placements';
 import Users from './pages/admin/Users';
+import OfficerDashboard from './pages/officer/OfficerDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import Analytics from './pages/officer/Analytics';
 import EmailSettings from './pages/admin/EmailSettings';
 import AuditLogs from './pages/admin/AuditLogs';
 import Notifications from './pages/Notifications';
@@ -68,7 +70,8 @@ function App() {
       {/* Officers (admins may also enter) */}
       <Route element={<ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'ADMIN']} />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/officer" element={<DashboardPlaceholder title="Placement Officer Dashboard" />} />
+          <Route path="/officer" element={<OfficerDashboard />} />
+          <Route path="/officer/analytics" element={<Analytics />} />
           <Route path="/officer/companies" element={<Companies />} />
           <Route path="/officer/jobs" element={<Jobs />} />
           <Route path="/officer/drives" element={<Drives />} />
@@ -86,7 +89,7 @@ function App() {
       {/* Admin only */}
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/admin" element={<DashboardPlaceholder title="Admin Dashboard" />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<Users />} />
           <Route path="/admin/email" element={<EmailSettings />} />
           <Route path="/admin/audit" element={<AuditLogs />} />
